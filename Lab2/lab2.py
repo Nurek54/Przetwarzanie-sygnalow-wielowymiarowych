@@ -4,89 +4,117 @@ from skimage import data
 from skimage.transform import warp, AffineTransform
 from scipy.spatial.distance import cdist
 
-# ---------- Zadanie 1 ----------
-fig, ax = plt.subplots(3, 2, figsize=(10, 7))
+# Zadanie 1
+fig1, ax1 = plt.subplots(2, 2, figsize=(10, 7))
 
-img = data.chelsea()            # jak nie dziala, to: img = data.cat()
-ax[0, 0].imshow(img)
-ax[0, 0].set_title('Chelsea')
+obraz = data.cat()
+ax1[0,0].imshow(obraz)
+ax1[0,0].set_title('Chelsea')
 
-mono = np.mean(img, axis=2)     # srednia z 3 kanalow -> obraz szary
-male = mono[::8, ::8]           # co osmy piksel w obu osiach
-ax[0, 1].imshow(male, cmap='binary_r')
-ax[0, 1].set_title('Zmniejszenie + Mono')
+mono = np.mean(obraz, axis=2)
 
-kat = np.radians(15)            # 15 stopni na radiany
+male = mono[::8,::8]
 
-rotacja = np.array([[ np.cos(kat), np.sin(kat), 0],
-                    [-np.sin(kat), np.cos(kat), 0],
-                    [ 0,           0,           1]])
+ax1[0,1].imshow(male, cmap='binary_r')
+ax1[0,1].set_title('Zmnniejszony + Mono')
 
-pochylenie = np.array([[1, 0.5, 0],
-                       [0, 1,   0],
-                       [0, 0,   1]])
+kat = np.radians(15)
+c = np.cos(kat)
+s = np.sin(kat)
 
-obraz_rot = warp(male, AffineTransform(matrix=rotacja))
-obraz_poch = warp(male, AffineTransform(matrix=pochylenie))
+rotacja = np.array([[ c, s, 0],
+                    [-s, c, 0],
+                    [ 0, 0, 1]])
 
-ax[1, 0].imshow(obraz_rot, cmap='binary_r')
-ax[1, 0].set_title('Rotacja')
-ax[1, 1].imshow(obraz_poch, cmap='binary_r')
-ax[1, 1].set_title('Pochylenie')
+pochylenie = np.array([[1, -0.5, 0],
+                       [0, 1, 0],
+                       [ 0, 0, 1]])
+
+transformacja_rotacja = AffineTransform(matrix = rotacja)
+transformacja_pochylenie = AffineTransform(matrix = pochylenie)
+
+obraz_rotacja = warp(male, rotacja)
+obraz_pochylenie = warp(male, pochylenie)
+
+ax1[1,0].imshow(obraz_rotacja, cmap='binary_r')
+ax1[1,0].set_title('Rotacja')
+ax1[1,1].imshow(obraz_pochylenie, cmap='binary_r')
+ax1[1,1].set_title('Pochylenie')
 
 plt.tight_layout()
 plt.savefig('zad1.png')
 
-# ---------- Zadanie 2 ----------
-fig, ax = plt.subplots(1, 2, figsize=(9, 6), sharex=True, sharey=True)
+# Zadanie 2
+
+fig2, ax2 = plt.subplots(1, 2, figsize=(9, 6), sharex=True, sharey=True)
+
+wiersze = male.shape[0]
+kolumny = male.shape[1]
 
 wsp = []
-for i in range(male.shape[0]):
-    for j in range(male.shape[1]):
+for i in range(wiersze):
+    for j in range(kolumny):
         wsp.append([i, j])
-wsp = np.array(wsp)             # ksztalt (2166, 2)
+wsp = np.array(wsp)
 
-kolory = male.flatten()         # obraz 2D -> jeden dlugi wektor
+kolory = male.flatten()
 
-ax[0].scatter(wsp[:, 0], wsp[:, 1], c=kolory, cmap='binary_r')
+x = wsp[:, 0]
+y = wsp[:, 1]
+
+ax2[0].scatter(x,y, c = kolory, cmap='binary_r')
+#ax2[0].set_title('test')
 
 jedynki = np.ones(len(wsp))
-wsp3 = np.column_stack((wsp, jedynki))   # ksztalt (2166, 3)
+wsp3 = np.column_stack((wsp, jedynki))
 
-nowe = (rotacja @ wsp3.T).T     # A x [x, y, 1] dla kazdego punktu
+nowe = []
+for punkt in wsp3:
+    nowy_punkt = rotacja @ punkt
+    nowe.append(nowy_punkt)
+nowe = np.array(nowe)
 
-ax[1].scatter(nowe[:, 0], nowe[:, 1], c=kolory, cmap='binary_r')
+# print("Po dodaniu jedynek:")
+# print(nowe)
+
+nowe_x = nowe[:, 0]
+nowe_y = nowe[:, 1]
+
+ax2[1].scatter(nowe_x, nowe_y, c=kolory, cmap='binary_r')
 
 plt.tight_layout()
 plt.savefig('zad2.png')
 
-# ---------- Zadanie 3 ----------
-fig, ax = plt.subplots(1, 3, figsize=(12, 6))
+# Zadanie 3
+fig3, ax3 = plt.subplots(1, 3)
 
-ax[0].scatter(wsp[:, 0], wsp[:, 1], c=kolory, cmap='binary_r')
+ax3[0].scatter(x, y, c=kolory, cmap='binary_r')
 
-indeksy = np.random.choice(len(wsp), 1000, replace=False)
-wsp_los = wsp[indeksy]
-kolory_los = kolory[indeksy]
+ile_punktow = len(wsp)
+indeksy = np.random.choice(ile_punktow, 1000, replace=False)
 
-ax[1].scatter(wsp_los[:, 0], wsp_los[:, 1], c=kolory_los, cmap='binary_r')
+wspolrzedne_losowych = wsp[indeksy]
+kolory_losowych = kolory[indeksy]
 
-nowe_x = np.linspace(0, male.shape[0] - 1, 300)
-nowe_y = np.linspace(0, male.shape[1] - 1, 400)
+ax3[1].scatter(wspolrzedne_losowych[:, 0], wspolrzedne_losowych[:, 1], c=kolory_losowych, cmap='binary_r')
 
-xs = []
-ys = []
-wartosci = []
-for x in nowe_x:
-    for y in nowe_y:
-        odl = cdist([[x, y]], wsp_los)      # odleglosc do 1000 punktow
-        najblizszy = np.argmin(odl)         # indeks najblizszego
-        xs.append(x)
-        ys.append(y)
-        wartosci.append(kolory_los[najblizszy])
+siatka_x = np.linspace(0, wiersze - 1, 300)
+siatka_y = np.linspace(0, kolumny - 1, 400)
 
-ax[2].scatter(xs, ys, c=wartosci, cmap='binary_r', s=1)
+wynik_x = []
+wynik_y = []
+wynik_kolory = []
+
+for px in siatka_x:
+    for py in siatka_y:
+        odlegolosc = cdist([[px, py]], wspolrzedne_losowych)
+        najblizszy = np.argmin(odlegolosc)
+        wynik_x.append(px)
+        wynik_y.append(py)
+
+        wynik_kolory.append(kolory_losowych[najblizszy])
+
+ax3[2].scatter(wynik_x, wynik_y, c=wynik_kolory, cmap='binary_r')
 
 plt.tight_layout()
 plt.savefig('zad3.png')
-plt.show()
