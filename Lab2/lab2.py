@@ -7,7 +7,7 @@ from scipy.spatial.distance import cdist
 # Zadanie 1
 fig1, ax1 = plt.subplots(2, 2, figsize=(10, 7))
 
-obraz = data.cat()
+obraz = data.chelsea()
 ax1[0,0].imshow(obraz)
 ax1[0,0].set_title('Chelsea')
 
