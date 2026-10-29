@@ -1,0 +1,72 @@
+# Zadanie 3
+print(ksiezyc.shape)   # (512, 512)
+# LUT z sinusa probkowanego od start do koniec
+def lut_sinus(start, koniec):
+    x = np.linspace(start, koniec, L)
+    return przeskaluj(np.sin(x))
+
+
+wyniki = np.zeros((10, 10, 10))
+konce = np.linspace(0, 7 * np.pi, 10)
+
+for i in range(10):
+    lut_r = lut_sinus(-0.5 * np.pi, konce[i])
+    kanal_r = lut_r[ksiezyc]
+
+    for j in range(10):
+        lut_g = lut_sinus(-0.75 * np.pi, konce[j])
+        kanal_g = lut_g[ksiezyc]
+
+        for k in range(10):
+            lut_b = lut_sinus(-np.pi, konce[k])
+            kanal_b = lut_b[ksiezyc]
+
+            # skladamy 3 kanaly w obraz barwny
+            kolorowy = np.zeros((ksiezyc.shape[0], ksiezyc.shape[1], 3), dtype=int)
+            kolorowy[:, :, 0] = kanal_r
+            kolorowy[:, :, 1] = kanal_g
+            kolorowy[:, :, 2] = kanal_b
+
+            # entropia: obraz -> wektor -> prawdopodobienstwa
+            wektor = kolorowy.flatten()
+            wartosci, ile = np.unique(wektor, return_counts=True)
+            prawd = ile / wektor.size
+            wyniki[i, j, k] = entropy(prawd)
+
+# szukamy kombinacji z najwieksza entropia
+najlepsze = np.argwhere(wyniki == np.max(wyniki))[0]
+i = najlepsze[0]
+j = najlepsze[1]
+k = najlepsze[2]
+print('najlepsze i, j, k:', i, j, k, 'entropia:', np.max(wyniki))
+
+# odtwarzamy najlepszy obraz
+lut_r = lut_sinus(-0.5 * np.pi, konce[i])
+lut_g = lut_sinus(-0.75 * np.pi, konce[j])
+lut_b = lut_sinus(-np.pi, konce[k])
+
+kolorowy = np.zeros((ksiezyc.shape[0], ksiezyc.shape[1], 3), dtype=int)
+kolorowy[:, :, 0] = lut_r[ksiezyc]
+kolorowy[:, :, 1] = lut_g[ksiezyc]
+kolorowy[:, :, 2] = lut_b[ksiezyc]
+
+fig3, ax3 = plt.subplots(1, 3, figsize=(15, 5))
+
+ax3[0].plot(lut_r, c='red')
+ax3[0].plot(lut_g, c='green')
+ax3[0].plot(lut_b, c='blue')
+ax3[0].set_title('Funkcje transformacji')
+
+ax3[1].imshow(kolorowy)
+ax3[1].set_title('Obraz po transformacji')
+
+for c in range(3):
+    kanal = kolorowy[:, :, c]
+    wartosci, ile = np.unique(kanal, return_counts=True)
+    prawd = ile / kanal.size
+    ax3[2].bar(wartosci, prawd, color=kolory[c], alpha=0.5)
+ax3[2].set_title('Histogramy')
+
+plt.tight_layout()
+plt.savefig('zad3.png')
+plt.show()
